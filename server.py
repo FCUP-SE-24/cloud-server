@@ -56,6 +56,7 @@ def control_motor():
 @app.route('/set_daily_goal', methods=['POST'])
 def set_daily_goal():
     data = request.json
+    bowl_name = data.get('bowl_name')
     #response = requests.post('http://raspberry_pi_ip/set_daily_goal', json=data)
     #return response.json()
     return {'message': f'Daily goal set to {data.get("daily_goal")}'}
@@ -74,8 +75,31 @@ def add_bowl():
 
 @app.route('/get_food_amount', methods=['GET'])
 def get_food_amount():
+   data = request.json
    food_amount = 50
+   bowl_name = data.get('bowl_name')
    return {'food_amount': food_amount}
+
+@app.route('/get_daily_goal', methods=['GET'])
+def get_daily_goal():
+   data = request.json
+   daily_goal = 100
+   bowl_name = data.get('bowl_name')
+   return {'daily_goal': daily_goal}
+
+@app.route('/get_last_feeding_time', methods=['GET'])
+def get_last_feeding_time():
+   data = request.json
+   last_feeding_time = '12:00'
+   bowl_name = data.get('bowl_name')
+   return {'last_feeding_time': last_feeding_time}
+
+@app.route('/set_feeding_time', methods=['POST'])
+def set_feeding_time():
+   data = request.json
+   feeding_time = data.get('feeding_time')
+   bowl_name = data.get('bowl_name')
+   return {'message': f'Last feeding time set to {feeding_time}'}
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
