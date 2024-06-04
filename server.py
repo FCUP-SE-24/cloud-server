@@ -3,16 +3,52 @@ from flask_restful import Resource, Api
 import requests
 import json
 import threading
+import time
 
 app = Flask(__name__)
 api = Api(app)
 
-new_bowl_data = {'user_id': "knfjwjwo", 'daily_goal': 70.0, 'bowl_name': "lalalala"}
-bowls_list_request = {'message': True}
+new_bowl_data = {}
+
+# bowls list
+bowls_list_request = {'message': False}
 bowls_list = {}
 data_bowls_ready = threading.Event()
+
+# get weight
+weight_request = {'message': False}
+weight = 0
+weight_ready = threading.Event()
+
+# arduinos number
+arduinos_request = {'message': False}
+arduinos_avaiable = 0
+waiting_for_ard_count = threading.Event()
+
+# daily goal
 daily_goal_request = {'message': False}
-add_bowl_ready = threading.Event()
+daily_goal_bowl = 0
+daily_goal_ready = threading.Event()
+
+# food amount
+food_amount_request = {'message': False}
+food_amount_bowl = 0
+food_amount_ready = threading.Event()
+
+# last feeding time
+last_feeding_time_request = {'message': False}
+last_feeding_time = 0
+last_feeding_time_ready = threading.Event()
+
+# set daily goal
+new_daily_goal_data = {'message': False}
+
+
+# set feeding time
+new_feeding_time = {'message': False}
+
+
+#add_bowl_ready = threading.Event()
 
 # Database Requests
 
@@ -21,6 +57,7 @@ def get_bowls_list():
    bowls_list_request['message'] = True
    data_bowls_ready.wait()
    data_bowls_ready.clear()
+   #bowls = ['Bowl 1', 'Bowl 2', 'Bowl 3', 'undefined1', 'undefined'}
    return jsonify(bowls_list)
 
 @app.route('/send_bowls_list', methods=['GET','POST'])
@@ -34,53 +71,180 @@ def send_bowls_list():
       data_bowls_ready.set()
       return jsonify({'message':"bowls list send"})
 
+
+# changed to comunicate with rpi
 @app.route('/get_daily_goal', methods=['GET'])
 def get_daily_goal():
-   data = request.args
-   bowl_name = data.get('bowl_name')
-   daily_goal = 100
-   return {'daily_goal': daily_goal}
+   global daily_goal_request
+   global daily_goal_bowl
+   bowl_name = request.form['bowl_name']
+   daily_goal_request = {'message': True, 'bowl_name':bowl_name}
+   daily_goal_ready.wait()
+   daily_goal_ready.clear()
+   return jsonify({'daily_goal': daily_goal_bowl})
+   
+   
+# added to comunicate with rpi
+@app.route('/send_daily_goal', methods=['GET','POST'])
+def send_daily_goal():
+   global daily_goal_request
+   global daily_goal_bowl
+   if request.method == 'GET':
+      return jsonify(daily_goal_request)
+   elif request.method == 'POST':
+      daily_goal_request = {'message': False}
+      data = request.get_json()
+      daily_goal_bowl = data['daily_goal']
+      daily_goal_ready.set()
+      return jsonify({'message':"daily goal send"})
 
+
+# changed to comunicate with rpi
 @app.route('/get_food_amount', methods=['GET'])
 def get_food_amount():
-   # current dosage saved in database
-   data = request.args
-   bowl_name = data.get('bowl_name')
-   food_amount = 70
-   return {'food_amount': food_amount}
+   global food_amount_request
+   global food_amount_bowl
+   bowl_name = request.form['bowl_name']
+   food_amount_request = {'message': True, 'bowl_name':bowl_name}
+   food_amount_ready.wait()
+   food_amount_ready.clear()
+   return jsonify({'food_amount': food_amount_bowl})
 
+
+# added to comunicate with rpi
+@app.route('/send_food_amount', methods=['GET','POST'])
+def send_food_amount():
+   global food_amount_request
+   global food_amount_bowl
+   if request.method == 'GET':
+      return jsonify(food_amount_request)
+   elif request.method == 'POST':
+      food_amount_request = {'message': False}
+      data = request.get_json()
+      food_amount_bowl = data['food_amount']
+      food_amount_ready.set()
+      return jsonify({'message':"food amount send"})
+
+
+# changed to comunicate with rpi
 @app.route('/get_last_feeding_time', methods=['GET'])
 def get_last_feeding_time():
+   global last_feeding_time_request
+   global last_feeding_time
    data = request.args
    bowl_name = data.get('bowl_name')
-   last_feeding_time = '12:00'
-   return {'last_feeding_time': last_feeding_time}
+   last_feeding_time_request = {'message': True, 'bowl_name':bowl_name}
+   last_feeding_time_ready.wait()
+   last_feeding_time_ready.clear()
+   return jsonify({'last_feeding_time': last_feeding_time})
+   
+   
+# added to comunicate with rpi
+@app.route('/send_last_feeding_time', methods=['GET','POST'])
+def send_last_feeding_time():
+   global last_feeding_time_request
+   global last_feeding_time
+   if request.method == 'GET':
+      return jsonify(last_feeding_time_request)
+   elif request.method == 'POST':
+      last_feeding_time_request = {'message': False}
+      data = request.get_json()
+      last_feeding_time = data['last_feeding_time']
+      last_feeding_time_ready.set()
+      return jsonify({'message':"food amount send"})
 
+
+# changed to comunicate with rpi
 @app.route('/get_weight', methods=['GET'])
 def get_weight():
-    # weight in sensor
-    data = request.args
-    bowl_name = data.get('bowl_name')
-    #weight = requests.get('http://raspberry_pi_ip/get_weight').json()
-    return {'weight': 5}
+   global weight_request
+   data = request.args
+   bowl_name = data.get('bowl_name')
+   weight_request = {'message':True,'bowl_name':bowl_name}
+   weight_ready.wait()
+   weight_ready.clear()
+   return jsonify({'weight': weight})
 
+
+# added to comunicate with rpi
+@app.route('/send_weight', methods=['GET','POST'])
+def send_weight():
+   global weight_request
+   global weight
+   if request.method == 'GET':
+      return jsonify(weight_request)
+   elif request.method == 'POST':
+      weight_request = {'message': False}
+      data = request.get_json()
+      weight = data['weight']
+      weight_ready.set()
+      return jsonify({'message':"weight send"})
+
+
+# changed to comunicate with rpi
 @app.route('/get_undefined_count', methods=['GET'])
 def get_undefined_count():
-      # get number of bowls without name
-      # query to database
-      return {'count': 2}
+   global arduinos_request
+   global arduinos_avaiable
+   arduinos_request['message'] = True
+   waiting_for_ard_count.wait()
+   waiting_for_ard_count.clear()
+   return jsonify({'count': arduinos_avaiable})
+     
+      
+# added to comunicate with rpi
+@app.route('/send_arduinos_count', methods=['GET', 'POST'])
+def receive_undefined_count():
+   global arduinos_request
+   global arduinos_avaiable
+   if request.method == 'GET':
+      return jsonify(arduinos_request)
+   elif request.method == 'POST':
+      arduinos_request['message'] = False
+      data = request.get_json()
+      arduinos_avaiable = data['number_arduinos']
+      waiting_for_ard_count.set()
+      return jsonify({'message':"count send"})
 
+
+# changed to comunicate with rpi
 @app.route('/set_daily_goal', methods=['POST'])
 def set_daily_goal():
-    bowl_name = request.form['bowl_name']
-    daily_goal = request.form['daily_goal']
-    return {'message': f'Daily goal of {bowl_name} was successfully changed to {daily_goal}'}
+   global new_daily_goal_data
+   bowl_name = request.form['bowl_name']
+   daily_goal = request.form['daily_goal']
+   new_daily_goal_data = {'message':True,'bowl_name':bowl_name,'daily_goal':daily_goal}
+   time.sleep(3)
+   return {'message': f'Daily goal of {bowl_name} was successfully changed to {daily_goal}'}
+   
+   
+# added to comunicate with rpi
+@app.route('/rpi_set_daily_goal', methods=['GET','POST'])
+def rpi_set_daily_goal():
+   global new_daily_goal_data
+   if request.method == 'POST':
+       new_daily_goal_data = {'message': False}
+   return jsonify(new_daily_goal_data)
 
+
+# changed to comunicate with rpi
 @app.route('/set_feeding_time', methods=['POST'])
 def set_feeding_time():
-   feeding_time = request.form['feeding_time']
+   global new_feeding_time
    bowl_name = request.form['bowl_name']
+   feeding_time = request.form['feeding_time']
+   new_feeding_time = {'message':True,'bowl_name':bowl_name,'feeding_time':feeding_time}
+   time.sleep(3)
    return {'message': f'Last feeding time set to {feeding_time}'}
+
+
+# added to comunicate with rpi
+@app.route('/rpi_set_feeding_time', methods=['GET','POST'])
+def rpi_set_feeding_time():
+   global new_feeding_time
+   if request.method == 'POST':
+       new_daily_goal_data = {'message': False}
+   return jsonify(new_feeding_time)
 
 @app.route('/send_bowl', methods=['POST','GET'])
 def send_bowl():
@@ -88,7 +252,6 @@ def send_bowl():
    if request.method == 'POST':
        new_bowl_data = request.get_json()
        #add_bowl_ready.set()
-   print(new_bowl_data)
    #elif request.method == 'GET':
    return jsonify(new_bowl_data)
    #new_bowl = request.form['bowl_name']
@@ -168,20 +331,6 @@ def reset_bowl():
 #        except requests.exceptions.RequestException as e:
 #            return jsonify({"error": "Erro ao conectar ao Raspberry Pi"}), 500
 
-#@app.route('/set_daily_goal', methods=['POST'])
-#def set_daily_goal():
-#    if request.method == 'POST':
-#        daily_goal = request.json.get('daily_goal')
-#        raspberry_pi_url = 'http://google.com'
-#        data = {'daily_goal': daily_goal}
-#        try:
-#            response = requests.put(raspberry_pi_url, json=data)
-            #if response.status_code == 200:
-            #    return jsonify({"message": "Mensagem enviada com sucesso"})
-            #else:
-            #    return jsonify({"error": f"Erro ao enviar mensagem: {response.content.decode('utf->
-#        except requests.exceptions.RequestException as e:
-#            return jsonify({"error": "Erro ao conectar ao Raspberry Pi"}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
