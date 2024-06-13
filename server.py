@@ -50,10 +50,7 @@ new_feeding_time = {'message': False}
 reset_bowl_request = {'message': False}
 
 # motor status
-#motor_request = {'message': True, 'bowl_name':'Cat', 'motor_state': 'on'}
 motor_request = {'message' : False}
-
-#add_bowl_ready = threading.Event()
 
 # Database Requests
 
@@ -169,6 +166,7 @@ def get_bowl_weight():
    global bowl_weight_request
    data = request.args
    bowl_name = data.get('bowl_name')
+   print(bowl_name)
    bowl_weight_request = {'message':True,'bowl_name':bowl_name}
    bowl_weight_ready.wait()
    bowl_weight_ready.clear()
@@ -260,14 +258,7 @@ def send_bowl():
    global new_bowl_data
    if request.method == 'POST':
        new_bowl_data = request.get_json()
-       #add_bowl_ready.set()
-   #elif request.method == 'GET':
    return jsonify(new_bowl_data)
-   #new_bowl = request.form['bowl_name']
-   #daily_goal = request.form['daily_goal']
-   #new_bowl_data = request.get_json()
-   #return {'message': f'Bowl {new_bowl} added successfully with daily goal of {daily_goal}'}
-
 
 @app.route('/add_bowl', methods=['POST'])
 def add_bowl():
@@ -276,9 +267,6 @@ def add_bowl():
    daily_goal = request.form['daily_goal']
    bowl_name = request.form['bowl_name']
    new_bowl_data = {'user_id':user_id, 'daily_goal':daily_goal, 'bowl_name':bowl_name}
-   #new_bowl_data = request.get_json()
-   #add_bowl_ready.wait()
-   #add_bowl_ready.clear()
    return jsonify({'message': "New bowl added"})
 
 # ----------
@@ -316,33 +304,5 @@ def send_reset_bowl():
        reset_bowl_request = {'message': False}
    return jsonify(reset_bowl_request)
 
-# ----------
-
-
-#@app.route('/send_weight', methods=['POST'])
-#def receive_weight():
-#    if request.method == 'POST':
-#        data = request.get_json()
-#        print("data received\n")
-#        return jsonify({"message": "Data received and processed successfully!"})
-#    return jsonify({"error": "Invalid data"}), 400
-
-
-#@app.route('/change_motor_state', methods=['POST'])
-#def change_motor_state():
-#    if request.method == 'POST':
-#        activate_motor = request.json.get('activate_motor')
-#        raspberry_pi_url = 'http://google.com'
-#        data = {'activate_motor': activate_motor}
-#        try:
-#            response = requests.put(raspberry_pi_url, json=data)
-            #if response.status_code == 200:
-            #    return jsonify({"message": "Mensagem enviada com sucesso"})
-            #else:
-            #    return jsonify({"error": f"Erro ao enviar mensagem: {response.content.decode('utf-8')}"}), 500
-#        except requests.exceptions.RequestException as e:
-#            return jsonify({"error": "Erro ao conectar ao Raspberry Pi"}), 500
-
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5002, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
