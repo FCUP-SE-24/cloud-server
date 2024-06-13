@@ -49,6 +49,10 @@ new_feeding_time = {'message': False}
 # reset bowl
 reset_bowl_request = {'message': False}
 
+# motor status
+#motor_request = {'message': True, 'bowl_name':'Cat', 'motor_state': 'on'}
+motor_request = {'message' : False}
+
 #add_bowl_ready = threading.Event()
 
 # Database Requests
@@ -283,26 +287,19 @@ def add_bowl():
 
 @app.route('/control_motor', methods=['POST'])
 def control_motor():
+   global motor_request
    bowl_name = request.form['bowl_name']
-   # Get the 'activate_motor' value from the request
    activate_motor = request.form['activate_motor']
-
-    # Prepare the data to send to the Raspberry Pi
-   #  data = {'message': 'on' if activate_motor == 'on' else 'off'}
-
-   #  try:
-   #      # Send the data to the Raspberry Pi
-   #      response = requests.post(RASPBERRY_PI_URL, json=data)
-
-   #      # Check if the request was successful
-   #      if response.status_code == 200:
-   #          return jsonify(data)
-   #      else:
-   #          return jsonify({'error': f"Failed to control motor: {response.content.decode('utf-8')}"}), 500
-   #  except requests.exceptions.RequestException as e:
-   #      return jsonify({'error': 'Failed to connect to Raspberry Pi'}), 500
    state = 'on' if request.form['activate_motor']== 'on' else 'off'
+   motor_request = {'message': True, 'bowl_name': bowl_name,'motor_state': state}
    return {'message': f'Motor is {state} for bowl {bowl_name}'}
+   
+@app.route('/send_control_motor', methods=['GET','POST'])
+def send_control_motor():
+   global motor_request
+   if request.method == 'POST':
+       motor_request = {'message': False}
+   return jsonify(motor_request)
 
 @app.route('/reset_bowl', methods=['POST'])
 def reset_bowl():
@@ -311,6 +308,13 @@ def reset_bowl():
    reset_bowl_request = { 'message': True, 'bowl_name': bowl_name }
    time.sleep(3)
    return {'message': f'Bowl {bowl_name}\'s weight has been updated'}
+   
+@app.route('/send_reset_bowl', methods=['POST','GET'])
+def send_reset_bowl():
+   global reset_bowl_request
+   if request.method == 'POST':
+       reset_bowl_request = {'message': False}
+   return jsonify(reset_bowl_request)
 
 # ----------
 
@@ -341,4 +345,4 @@ def reset_bowl():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5002, debug=True)
